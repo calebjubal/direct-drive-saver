@@ -18,6 +18,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Fixed
 
+- Loaded private Drive images through authenticated media requests instead of unauthenticated thumbnail URLs.
+- Replaced broken image elements with responsive loading and unavailable states.
 - Isolated development and production Next.js output directories to prevent stale React Client Manifest errors.
 - Added explicit `dev`, `build`, and `start` commands for predictable local workflows.
 - Suppressed hydration noise caused by browser extensions that inject attributes into the document body.
