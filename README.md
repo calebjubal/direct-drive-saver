@@ -88,6 +88,10 @@ Camera access works on `localhost` during development. Production deployments mu
 
 If Next.js reports that a module is missing from the React Client Manifest, stop every running DriveCam server and restart it with `npm run dev`. Development artifacts are stored in `.next-dev`, while production builds use `.next`, so running `npm run build` can no longer invalidate the development server.
 
+If the console repeatedly reports that `ws://localhost:3000/_next/webpack-hmr` failed, the browser tab has outlived its development server. Keep the `npm run dev` terminal open and reload the page. For production-like testing, use `npm run build` followed by `npm run start`; production mode does not use the HMR WebSocket.
+
+Browser extensions can add attributes such as `cz-shortcut-listen` to the page before React starts. DriveCam suppresses hydration warnings for these extension-added body attributes. Errors about editing browser tabs originate from browser tooling rather than the application.
+
 ## Production build
 
 ```bash

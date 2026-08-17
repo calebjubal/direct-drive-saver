@@ -20,6 +20,8 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 - Isolated development and production Next.js output directories to prevent stale React Client Manifest errors.
 - Added explicit `dev`, `build`, and `start` commands for predictable local workflows.
+- Suppressed hydration noise caused by browser extensions that inject attributes into the document body.
+- Documented how to recover when a browser tab outlives its development HMR server.
 
 ## [1.0.0] - 2026-08-17
 
