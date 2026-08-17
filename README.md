@@ -106,7 +106,7 @@ Run the compiled production application with `npm run start`.
 1. Supabase redirects the user to Google with profile and full Drive scopes.
 2. Supabase completes OAuth and returns a Google provider token with the user session.
 3. DriveCam keeps the provider token in session storage and uses it for authenticated Drive API requests.
-4. Folder metadata and image thumbnails are loaded from Drive rather than copied into a local database.
+4. Folder metadata is loaded from Drive, and visible images are fetched with the Google provider token into temporary browser object URLs rather than copied into a local database.
 5. Captured images are uploaded directly to the currently selected Drive folder.
 6. Delete actions move items to Google Drive trash so they remain recoverable.
 
@@ -129,6 +129,8 @@ fixtures/next-app/
 ## Security notes
 
 - Never commit `.env.local` or OAuth client secrets.
+- Private Drive images are requested with an OAuth bearer header; access tokens are never added to image URLs.
+- Temporary image object URLs are revoked when their UI component unmounts.
 - Never put a Supabase secret or `service_role` key in a `NEXT_PUBLIC_` variable.
 - Provider tokens can access private Drive data. DriveCam stores the token for the browser session only and removes it on sign-out.
 - Supabase does not refresh Google provider tokens automatically. If Drive access expires, the app asks the user to reconnect.
