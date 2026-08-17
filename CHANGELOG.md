@@ -13,12 +13,14 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 
+- Moved the Next.js application from `fixtures/next-app` to the repository root for reliable Vercel Git deployments.
 - Pinned deployment builds to Node.js 22 for current Supabase client compatibility.
 - Expanded the interface into dedicated phone, tablet, laptop, and short-landscape layouts.
 - Added safe-area support, responsive navigation, adaptive content grids, and reduced-motion handling.
 
 ### Fixed
 
+- Avoided Vercel post-build finalization resolving `.next` files against the wrong directory.
 - Synchronized the pnpm lockfile so Vercel frozen installs include the Supabase client.
 - Loaded private Drive images through authenticated media requests instead of unauthenticated thumbnail URLs.
 - Replaced broken image elements with responsive loading and unavailable states.
