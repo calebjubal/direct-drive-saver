@@ -11,6 +11,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Project README with local development, OAuth, deployment, and security guidance.
 - Contributor workflow and validation checklist.
 
+### Changed
+
+- Expanded the interface into dedicated phone, tablet, laptop, and short-landscape layouts.
+- Added safe-area support, responsive navigation, adaptive content grids, and reduced-motion handling.
+
 ## [1.0.0] - 2026-08-17
 
 ### Added
