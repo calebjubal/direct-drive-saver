@@ -4,7 +4,9 @@
   "private": true,
   "description": "Controlled Next.js fixture for the node_modules install benchmark. Versions are exact-pinned to match versions.json; do not add carets.",
   "scripts": {
-    "build": "next build"
+    "dev": "next dev",
+    "build": "next build",
+    "start": "next start"
   },
   "dependencies": {
     "@supabase/supabase-js": "2.112.3",
