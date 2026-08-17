@@ -23,11 +23,11 @@ DriveCam is a mobile-first web camera that saves photos directly to a folder in 
 - [Google Drive API v3](https://developers.google.com/workspace/drive/api/guides/about-sdk)
 - Browser `MediaDevices.getUserMedia()` and Canvas APIs
 
-The web application is located in [`fixtures/next-app`](./fixtures/next-app).
+The web application is located at the repository root so Vercel and Next.js resolve the same build-output directory.
 
 ## Prerequisites
 
-- Node.js 20.9 or newer
+- Node.js 22
 - A Supabase project
 - A Google Cloud project with the Google Drive API enabled
 - A Google OAuth web client configured in Supabase
@@ -62,7 +62,7 @@ The full Drive scope is required because DriveCam can browse and manage existing
 
 ### 3. Create the environment file
 
-Create `fixtures/next-app/.env.local`:
+Create `.env.local` in the repository root:
 
 ```dotenv
 NEXT_PUBLIC_SUPABASE_URL=https://<project-ref>.supabase.co
@@ -75,7 +75,6 @@ The publishable Supabase key is suitable for a browser client. The Google API ke
 ## Local development
 
 ```bash
-cd fixtures/next-app
 npm ci
 npm run dev
 ```
@@ -95,7 +94,6 @@ Browser extensions can add attributes such as `cz-shortcut-listen` to the page b
 ## Production build
 
 ```bash
-cd fixtures/next-app
 npm run build
 ```
 
@@ -103,12 +101,11 @@ Run the compiled production application with `npm run start`.
 
 ### Vercel
 
-Set the Vercel project Root Directory to `fixtures/next-app`. The app pins Node.js 22 and includes a pnpm 10-compatible lockfile, so Vercel can use its default frozen install safely.
+Leave the Vercel project Root Directory empty. The Next.js source, package manifest, lockfiles, and generated `.next` directory all live at the repository root, avoiding subdirectory finalization path mismatches. The app pins Node.js 22 and includes a pnpm 10-compatible lockfile, so Vercel can use its default frozen install safely.
 
 Whenever `package.json` dependencies change, synchronize both committed lockfiles before deploying:
 
 ```bash
-cd fixtures/next-app
 npx pnpm@10 install --lockfile-only
 npm install --package-lock-only --ignore-scripts
 ```
@@ -127,7 +124,7 @@ Configure all three `NEXT_PUBLIC_` variables from `.env.local` in the target Ver
 ## Project structure
 
 ```text
-fixtures/next-app/
+.
 ├── app/
 │   ├── lib/
 │   │   ├── drive.js       # Authenticated Google Drive API operations
