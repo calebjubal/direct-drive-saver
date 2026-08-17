@@ -16,6 +16,11 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 - Expanded the interface into dedicated phone, tablet, laptop, and short-landscape layouts.
 - Added safe-area support, responsive navigation, adaptive content grids, and reduced-motion handling.
 
+### Fixed
+
+- Isolated development and production Next.js output directories to prevent stale React Client Manifest errors.
+- Added explicit `dev`, `build`, and `start` commands for predictable local workflows.
+
 ## [1.0.0] - 2026-08-17
 
 ### Added

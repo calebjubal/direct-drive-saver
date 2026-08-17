@@ -77,12 +77,16 @@ The publishable Supabase key is suitable for a browser client. The Google API ke
 ```bash
 cd fixtures/next-app
 npm ci
-npm exec next dev
+npm run dev
 ```
 
 Open [http://localhost:3000](http://localhost:3000).
 
 Camera access works on `localhost` during development. Production deployments must use HTTPS for browser camera permissions.
+
+### Troubleshooting a stale client manifest
+
+If Next.js reports that a module is missing from the React Client Manifest, stop every running DriveCam server and restart it with `npm run dev`. Development artifacts are stored in `.next-dev`, while production builds use `.next`, so running `npm run build` can no longer invalidate the development server.
 
 ## Production build
 
@@ -90,6 +94,8 @@ Camera access works on `localhost` during development. Production deployments mu
 cd fixtures/next-app
 npm run build
 ```
+
+Run the compiled production application with `npm run start`.
 
 ## How the application works
 
