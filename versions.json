@@ -1,0 +1,37 @@
+{
+  "$comment": "Single source of truth for every pinned version in the benchmark. Confirmed against the live npm registry and the local toolchain on 2026-07-27. Every phase reads from this file.",
+  "schemaVersion": 1,
+  "capturedAt": "2026-07-27",
+  "fixture": {
+    "next": "16.2.12",
+    "react": "19.2.6",
+    "react-dom": "19.2.6"
+  },
+  "managers": {
+    "npm": "11.5.2",
+    "pnpm": "11.11.0",
+    "bun": "1.2.19"
+  },
+  "configurations": [
+    { "id": "npm", "manager": "npm", "linker": "hoisted", "installCmd": ["npm", "ci"], "lockfile": "package-lock.json" },
+    { "id": "pnpm", "manager": "pnpm", "linker": "isolated", "installCmd": ["pnpm", "install", "--frozen-lockfile"], "lockfile": "pnpm-lock.yaml" },
+    { "id": "bun-hoisted", "manager": "bun", "linker": "hoisted", "installCmd": ["bun", "install", "--frozen-lockfile", "--linker=hoisted"], "lockfile": "bun.lock" },
+    { "id": "bun-isolated", "manager": "bun", "linker": "isolated", "installCmd": ["bun", "install", "--frozen-lockfile", "--linker=isolated"], "lockfile": "bun.lock" }
+  ],
+  "runtime": {
+    "node": "22.12.0"
+  },
+  "security": {
+    "osvScanner": "2.3.8",
+    "$comment": "OSV-Scanner is not yet installed locally; introduced in Phase 3."
+  },
+  "swc": {
+    "$comment": "Next's platform-specific SWC optional dependency per OS/arch. Exactly one is installed per platform; validation asserts its presence.",
+    "win32-x64": "@next/swc-win32-x64-msvc",
+    "win32-arm64": "@next/swc-win32-arm64-msvc",
+    "linux-x64-gnu": "@next/swc-linux-x64-gnu",
+    "linux-arm64-gnu": "@next/swc-linux-arm64-gnu",
+    "darwin-x64": "@next/swc-darwin-x64",
+    "darwin-arm64": "@next/swc-darwin-arm64"
+  }
+}
