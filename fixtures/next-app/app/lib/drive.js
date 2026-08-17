@@ -40,7 +40,7 @@ export async function listDriveContent(providerToken) {
     url.searchParams.set("spaces", "drive");
     url.searchParams.set("pageSize", "1000");
     url.searchParams.set("orderBy", "folder,name_natural");
-    url.searchParams.set("fields", "nextPageToken,files(id,name,mimeType,parents,thumbnailLink,modifiedTime,capabilities(canDelete,canMoveItemWithinDrive,canRename))");
+    url.searchParams.set("fields", "nextPageToken,files(id,name,mimeType,parents,thumbnailLink,modifiedTime,capabilities(canDelete,canDownload,canMoveItemWithinDrive,canRename))");
     if (pageToken) url.searchParams.set("pageToken", pageToken);
     const result = await driveRequest(providerToken, url.toString());
     files.push(...(result.files || []));
@@ -62,11 +62,31 @@ export async function listDriveContent(providerToken) {
     name: file.name,
     folderId: file.parents?.[0] || "root",
     parents: file.parents || [],
-    dataUrl: file.thumbnailLink || "",
+    thumbnailLink: file.thumbnailLink || "",
     createdAt: file.modifiedTime,
     capabilities: file.capabilities || {},
   }));
   return { folders, photos };
+}
+
+export async function downloadDriveImage(providerToken, fileId) {
+  if (!providerToken) throw new Error("Google Drive authorization has expired. Please reconnect.");
+  const url = new URL(`${DRIVE_API}/files/${encodeURIComponent(fileId)}`);
+  url.searchParams.set("alt", "media");
+  url.searchParams.set("supportsAllDrives", "true");
+
+  const response = await fetch(withKey(url.toString()), {
+    headers: { Authorization: `Bearer ${providerToken}` },
+  });
+  if (!response.ok) {
+    const payload = await response.json().catch(() => null);
+    const message = payload?.error?.message || `Google Drive image download failed (${response.status}).`;
+    const error = new Error(message);
+    error.status = response.status;
+    throw error;
+  }
+
+  return response.blob();
 }
 
 export function createDriveFolder(providerToken, name, parentId = "root") {
