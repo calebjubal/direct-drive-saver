@@ -3,6 +3,9 @@
   "version": "0.0.0",
   "private": true,
   "description": "Controlled Next.js fixture for the node_modules install benchmark. Versions are exact-pinned to match versions.json; do not add carets.",
+  "engines": {
+    "node": "22.x"
+  },
   "scripts": {
     "dev": "next dev",
     "build": "next build",
