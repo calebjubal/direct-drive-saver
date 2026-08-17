@@ -13,11 +13,13 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/),
 
 ### Changed
 
+- Pinned deployment builds to Node.js 22 for current Supabase client compatibility.
 - Expanded the interface into dedicated phone, tablet, laptop, and short-landscape layouts.
 - Added safe-area support, responsive navigation, adaptive content grids, and reduced-motion handling.
 
 ### Fixed
 
+- Synchronized the pnpm lockfile so Vercel frozen installs include the Supabase client.
 - Loaded private Drive images through authenticated media requests instead of unauthenticated thumbnail URLs.
 - Replaced broken image elements with responsive loading and unavailable states.
 - Isolated development and production Next.js output directories to prevent stale React Client Manifest errors.
