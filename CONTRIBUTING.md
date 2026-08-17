@@ -8,11 +8,10 @@ Thanks for helping improve DriveCam. This guide describes the expected developme
 2. Install the application dependencies:
 
    ```bash
-   cd fixtures/next-app
    npm ci
    ```
 
-3. Create `fixtures/next-app/.env.local` using the template in [README.md](./README.md).
+3. Create `.env.local` in the repository root using the template in [README.md](./README.md).
 4. Configure the Google provider and redirect URLs in Supabase.
 5. Start the development server:
 
@@ -31,10 +30,10 @@ Thanks for helping improve DriveCam. This guide describes the expected developme
 
 ## Code organization
 
-- UI state and screen flows belong in `fixtures/next-app/app/page.js`.
-- Shared Drive requests belong in `fixtures/next-app/app/lib/drive.js`.
-- Supabase client configuration belongs in `fixtures/next-app/app/lib/supabase.js`.
-- Global visual tokens and responsive styles belong in `fixtures/next-app/app/globals.css`.
+- UI state and screen flows belong in `app/page.js`.
+- Shared Drive requests belong in `app/lib/drive.js`.
+- Supabase client configuration belongs in `app/lib/supabase.js`.
+- Global visual tokens and responsive styles belong in `app/globals.css`.
 
 Keep API operations separate from components where practical. Drive request helpers should throw useful errors and must not silently swallow authorization failures.
 
@@ -43,7 +42,6 @@ Keep API operations separate from components where practical. Drive request help
 Before submitting a change, run:
 
 ```bash
-cd fixtures/next-app
 npm run build
 ```
 
