@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { supabase } from "./lib/supabase";
 import {
   createDriveFolder,
+  downloadDriveImage,
   listDriveContent,
   moveDriveItem,
   renameDriveItem,
@@ -62,6 +63,49 @@ function Toggle({ checked, onChange, label }) {
   return <button role="switch" aria-checked={checked} aria-label={label} onClick={() => onChange(!checked)} className={`toggle ${checked ? "on" : ""}`}><span/></button>;
 }
 
+function DriveImage({ photo, providerToken, alt }) {
+  const inlineSource = photo?.dataUrl?.startsWith("data:") ? photo.dataUrl : "";
+  const [source, setSource] = useState(inlineSource);
+  const [status, setStatus] = useState(inlineSource ? "ready" : "loading");
+
+  useEffect(() => {
+    if (inlineSource) {
+      setSource(inlineSource);
+      setStatus("ready");
+      return undefined;
+    }
+    if (!photo?.id || !providerToken || photo.capabilities?.canDownload === false) {
+      setSource("");
+      setStatus("error");
+      return undefined;
+    }
+
+    let active = true;
+    let objectUrl = "";
+    setSource("");
+    setStatus("loading");
+    void downloadDriveImage(providerToken, photo.id)
+      .then((blob) => {
+        if (!active) return;
+        objectUrl = URL.createObjectURL(blob);
+        setSource(objectUrl);
+        setStatus("ready");
+      })
+      .catch(() => {
+        if (active) setStatus("error");
+      });
+
+    return () => {
+      active = false;
+      if (objectUrl) URL.revokeObjectURL(objectUrl);
+    };
+  }, [inlineSource, photo?.capabilities?.canDownload, photo?.id, providerToken]);
+
+  if (source) return <img src={source} alt={alt || photo.name}/>;
+  const message = status === "error" ? `Could not load ${photo?.name || "image"}` : `Loading ${photo?.name || "image"}`;
+  return <span className={`drive-image-placeholder ${status}`} role="img" aria-label={message} title={message}><Icon name="image" size={24}/></span>;
+}
+
 function LoginScreen({ onConnect, error }) {
   const [loading, setLoading] = useState(false);
   const connect = async () => {
@@ -86,7 +130,7 @@ function FolderSetup({ folders, selectedId, onSelect, onContinue, onAdd }) {
   </div>;
 }
 
-function CameraScreen({ folder, reviewEnabled, onChangeFolder, onCapture, lastPhoto }) {
+function CameraScreen({ folder, reviewEnabled, onChangeFolder, onCapture, lastPhoto, providerToken }) {
   const videoRef = useRef(null);
   const streamRef = useRef(null);
   const [cameraState, setCameraState] = useState("loading");
@@ -125,7 +169,7 @@ function CameraScreen({ folder, reviewEnabled, onChangeFolder, onCapture, lastPh
   return <div className="camera-screen"><video ref={videoRef} className="camera-video" playsInline muted/><div className="camera-fallback"><div className="mock-sky"/><div className="mock-sun"/><div className="mock-mountain m1"/><div className="mock-mountain m2"/><div className="mock-road"/></div><div className="camera-shade top"/><div className="camera-shade bottom"/>
     <div className="camera-topbar"><button className={`glass-btn ${flash ? "active" : ""}`} onClick={() => setFlash(!flash)}><Icon name={flash ? "flash" : "flashOff"} size={21}/></button><button className={`glass-btn ${timer ? "active" : ""}`} onClick={() => setTimer(timer === 0 ? 3 : timer === 3 ? 10 : 0)}><Icon name="timer" size={21}/>{timer > 0 && <small>{timer}</small>}</button><button className={`glass-btn ${grid ? "active" : ""}`} onClick={() => setGrid(!grid)}><Icon name="grid" size={21}/></button><button className="glass-btn ratio">4:3</button></div>
     <button className="save-pill" onClick={onChangeFolder}><span><Icon name="folder" size={17}/><small>Saving to</small><b>{folder?.name || "My Drive"}</b></span><Icon name="chevron" size={18}/></button>{grid && <div className="viewfinder-grid"><i/><i/><i/><i/></div>}{countdown && <div className="countdown">{countdown}</div>}{cameraState !== "ready" && <div className="camera-status"><Icon name="camera" size={21}/><span>{cameraState === "loading" ? "Starting camera…" : "Camera preview unavailable — demo scene active"}</span></div>}
-    <div className="zoom-row"><button className="zoom active">1×</button><button className="zoom">2</button><button className="zoom">5</button></div><div className="capture-bar"><button className="last-photo" aria-label="Open recent photos">{lastPhoto ? <img src={lastPhoto.dataUrl} alt="Latest capture"/> : <Icon name="gallery" size={23}/>}</button><button className="shutter" onClick={triggerCapture} aria-label="Take photo"><span/></button><button className="flip-camera" onClick={() => setFacing(facing === "environment" ? "user" : "environment")} aria-label="Flip camera"><Icon name="rotate"/></button></div>{!reviewEnabled && <div className="direct-save-badge"><Icon name="check" size={15}/>Instant save is on</div>}
+    <div className="zoom-row"><button className="zoom active">1×</button><button className="zoom">2</button><button className="zoom">5</button></div><div className="capture-bar"><button className="last-photo" aria-label="Open recent photos">{lastPhoto ? <DriveImage photo={lastPhoto} providerToken={providerToken} alt="Latest capture"/> : <Icon name="gallery" size={23}/>}</button><button className="shutter" onClick={triggerCapture} aria-label="Take photo"><span/></button><button className="flip-camera" onClick={() => setFacing(facing === "environment" ? "user" : "environment")} aria-label="Flip camera"><Icon name="rotate"/></button></div>{!reviewEnabled && <div className="direct-save-badge"><Icon name="check" size={15}/>Instant save is on</div>}
   </div>;
 }
 
@@ -133,12 +177,12 @@ function PreviewScreen({ dataUrl, folder, onRetake, onSave }) {
   return <div className="preview-screen"><img src={dataUrl} alt="Captured preview"/><div className="preview-gradient"/><header><button className="glass-btn" onClick={onRetake}><Icon name="close"/></button><div><span>Review photo</span><small>Not saved yet</small></div><button className="glass-btn"><Icon name="dots"/></button></header><div className="preview-details"><span><Icon name="folder" size={17}/>Will save to <b>{folder?.name}</b></span></div><div className="preview-actions"><button className="secondary-action" onClick={onRetake}><Icon name="rotate"/>Retake</button><button className="save-action" onClick={onSave}><Icon name="check"/>Use photo</button></div></div>;
 }
 
-function FilesScreen({ folders, photos, selectedFolderId, onSelectFolder, onAddFolder, onFolderMenu, onPhotoMenu, onCamera }) {
+function FilesScreen({ folders, photos, selectedFolderId, onSelectFolder, onAddFolder, onFolderMenu, onPhotoMenu, onCamera, providerToken }) {
   const [query, setQuery] = useState(""); const [currentId, setCurrentId] = useState("root"); const current = folders.find(f => f.id === currentId) || folders[0];
   const children = folders.filter(f => f.parentId === currentId && f.name.toLowerCase().includes(query.toLowerCase())); const currentPhotos = photos.filter(p => p.folderId === currentId && p.name.toLowerCase().includes(query.toLowerCase()));
   const crumbs = []; let cursor = current; while (cursor) { crumbs.unshift(cursor); cursor = folders.find(f => f.id === cursor.parentId); }
   return <div className="app-screen files-screen"><header className="app-header"><div><span className="eyebrow">GOOGLE DRIVE</span><h1>My files</h1></div><div className="avatar">C</div></header><label className="searchbox"><Icon name="search" size={20}/><input value={query} onChange={e => setQuery(e.target.value)} placeholder="Search folders and photos"/></label><div className="breadcrumbs">{crumbs.map((c,i) => <span key={c.id}><button onClick={() => setCurrentId(c.id)}>{c.name}</button>{i < crumbs.length-1 && <Icon name="chevron" size={14}/>}</span>)}</div><div className="section-row"><h2>{current.name}</h2><button className="text-button" onClick={() => onAddFolder(currentId)}><Icon name="folderPlus" size={18}/>New folder</button></div><button className={`save-here ${selectedFolderId === currentId ? "active" : ""}`} onClick={() => onSelectFolder(currentId)}>{selectedFolderId === currentId ? <Icon name="check" size={17}/> : <Icon name="location" size={17}/>} {selectedFolderId === currentId ? "Current save location" : "Set as save location"}</button>
-    <div className="file-content">{children.length > 0 && <div className="folder-grid">{children.map(f => <div className="folder-tile" key={f.id} role="button" tabIndex={0} onClick={() => setCurrentId(f.id)} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setCurrentId(f.id); }}><div className="folder-tile-top"><Icon name="folder" size={34}/><button className="mini-menu" aria-label={`Manage ${f.name}`} onClick={(e) => { e.stopPropagation(); onFolderMenu(f); }}><Icon name="dots" size={20}/></button></div><b>{f.name}</b><small>{folders.filter(x => x.parentId === f.id).length} folders · {photos.filter(x => x.folderId === f.id).length} photos</small>{selectedFolderId === f.id && <span className="saving-tag"><Icon name="location" size={12}/>Saving here</span>}</div>)}</div>}{currentPhotos.length > 0 && <><div className="section-row photo-heading"><h2>Photos</h2><span>{currentPhotos.length} items</span></div><div className="photo-grid">{currentPhotos.map(p => <button key={p.id} className="photo-tile" onClick={() => onPhotoMenu(p)}><img src={p.dataUrl} alt={p.name}/><span className="photo-dots"><Icon name="dots" size={18}/></span></button>)}</div></>}{children.length === 0 && currentPhotos.length === 0 && <div className="empty-state"><div><Icon name="folder" size={32}/></div><h3>This folder is ready</h3><p>Photos you capture here will appear in this space.</p><button className="outline-button" onClick={onCamera}><Icon name="camera" size={18}/>Open camera</button></div>}</div>
+    <div className="file-content">{children.length > 0 && <div className="folder-grid">{children.map(f => <div className="folder-tile" key={f.id} role="button" tabIndex={0} onClick={() => setCurrentId(f.id)} onKeyDown={(e) => { if (e.key === "Enter" || e.key === " ") setCurrentId(f.id); }}><div className="folder-tile-top"><Icon name="folder" size={34}/><button className="mini-menu" aria-label={`Manage ${f.name}`} onClick={(e) => { e.stopPropagation(); onFolderMenu(f); }}><Icon name="dots" size={20}/></button></div><b>{f.name}</b><small>{folders.filter(x => x.parentId === f.id).length} folders · {photos.filter(x => x.folderId === f.id).length} photos</small>{selectedFolderId === f.id && <span className="saving-tag"><Icon name="location" size={12}/>Saving here</span>}</div>)}</div>}{currentPhotos.length > 0 && <><div className="section-row photo-heading"><h2>Photos</h2><span>{currentPhotos.length} items</span></div><div className="photo-grid">{currentPhotos.map(p => <button key={p.id} className="photo-tile" onClick={() => onPhotoMenu(p)}><DriveImage photo={p} providerToken={providerToken}/><span className="photo-dots"><Icon name="dots" size={18}/></span></button>)}</div></>}{children.length === 0 && currentPhotos.length === 0 && <div className="empty-state"><div><Icon name="folder" size={32}/></div><h3>This folder is ready</h3><p>Photos you capture here will appear in this space.</p><button className="outline-button" onClick={onCamera}><Icon name="camera" size={18}/>Open camera</button></div>}</div>
   </div>;
 }
 
@@ -327,9 +371,9 @@ export default function Page() {
   return <main className="site-shell"><div className="phone-shell">
     {screen === "login" && <LoginScreen onConnect={beginGoogleOAuth} error={authError}/>} 
     {screen === "setup" && <FolderSetup folders={folders} selectedId={selectedFolderId} onSelect={setSelectedFolderId} onContinue={() => setScreen("camera")} onAdd={() => setModal({ type: "new-folder", parentId: "root" })}/>} 
-    {screen === "camera" && <CameraScreen folder={selectedFolder} reviewEnabled={reviewEnabled} onChangeFolder={() => setScreen("files")} onCapture={capture} lastPhoto={photos[0]}/>} 
+    {screen === "camera" && <CameraScreen folder={selectedFolder} reviewEnabled={reviewEnabled} onChangeFolder={() => setScreen("files")} onCapture={capture} lastPhoto={photos[0]} providerToken={providerToken}/>} 
     {screen === "preview" && <PreviewScreen dataUrl={pendingPhoto} folder={selectedFolder} onRetake={() => { setPendingPhoto(null); setScreen("camera"); }} onSave={() => void savePhoto(pendingPhoto)}/>} 
-    {screen === "files" && <FilesScreen folders={folders} photos={photos} selectedFolderId={selectedFolderId} onSelectFolder={(id) => { setSelectedFolderId(id); notify("Save location updated"); }} onAddFolder={(parentId) => setModal({ type: "new-folder", parentId: parentId || "root" })} onFolderMenu={(folder) => setModal({ type: "folder-actions", folder })} onPhotoMenu={(photo) => setModal({ type: "photo-actions", photo })} onCamera={() => setScreen("camera")}/>} 
+    {screen === "files" && <FilesScreen folders={folders} photos={photos} selectedFolderId={selectedFolderId} onSelectFolder={(id) => { setSelectedFolderId(id); notify("Save location updated"); }} onAddFolder={(parentId) => setModal({ type: "new-folder", parentId: parentId || "root" })} onFolderMenu={(folder) => setModal({ type: "folder-actions", folder })} onPhotoMenu={(photo) => setModal({ type: "photo-actions", photo })} onCamera={() => setScreen("camera")} providerToken={providerToken}/>} 
     {screen === "settings" && <SettingsScreen reviewEnabled={reviewEnabled} onReviewChange={(value) => { setReviewEnabled(value); notify(value ? "Photo review turned on" : "Photos will save instantly"); }} folder={selectedFolder} onChangeFolder={() => setScreen("files")} photoCount={photos.length} onDisconnect={disconnect} user={user}/>} 
     {["camera", "files", "settings"].includes(screen) && <BottomNav screen={screen} onNavigate={setScreen}/>} 
     {toast && <div className="toast"><Icon name="check" size={17}/>{toast}</div>}
@@ -338,7 +382,7 @@ export default function Page() {
     {modal?.type === "folder-actions" && <ActionModal item={modal.folder} onClose={() => setModal(null)} onRename={() => setModal({ type: "rename", folder: modal.folder })} onMove={() => setModal({ type: "move-folder", folder: modal.folder })} onDelete={() => void deleteFolder(modal.folder.id)}/>} 
     {modal?.type === "rename" && <NameModal title="Rename folder" initial={modal.folder.name} confirmLabel="Save name" onClose={() => setModal(null)} onConfirm={(name) => void renameFolder(modal.folder.id, name)}/>} 
     {modal?.type === "move-folder" && <MoveModal title={`Move “${modal.folder.name}”`} folders={folders.filter((folder) => folder.id !== modal.folder.id && !descendantIds(modal.folder.id).includes(folder.id))} onClose={() => setModal(null)} onMove={(id) => void moveFolder(modal.folder.id, id)}/>} 
-    {modal?.type === "photo-actions" && <PhotoModal photo={modal.photo} folder={folders.find((folder) => folder.id === modal.photo.folderId)} onClose={() => setModal(null)} onMove={() => setModal({ type: "move-photo", photo: modal.photo })} onDelete={() => void deletePhoto(modal.photo.id)}/>} 
+    {modal?.type === "photo-actions" && <PhotoModal photo={modal.photo} folder={folders.find((folder) => folder.id === modal.photo.folderId)} onClose={() => setModal(null)} onMove={() => setModal({ type: "move-photo", photo: modal.photo })} onDelete={() => void deletePhoto(modal.photo.id)} providerToken={providerToken}/>} 
     {modal?.type === "move-photo" && <MoveModal title="Move photo" folders={folders} onClose={() => setModal(null)} onMove={(id) => void movePhoto(modal.photo.id, id)}/>} 
   </div></main>;
 }
@@ -346,4 +390,4 @@ export default function Page() {
 function NameModal({ title, initial = "", confirmLabel, onClose, onConfirm }) { const [name, setName] = useState(initial); return <Modal title={title} onClose={onClose}><label className="field-label">Folder name<input autoFocus value={name} onChange={e => setName(e.target.value)} onKeyDown={e => e.key === "Enter" && onConfirm(name)} placeholder="Untitled folder"/></label><div className="modal-buttons"><button className="plain-button" onClick={onClose}>Cancel</button><button className="primary-small" disabled={!name.trim()} onClick={() => onConfirm(name)}>{confirmLabel}</button></div></Modal>; }
 function ActionModal({ item, onClose, onRename, onMove, onDelete }) { return <Modal title={item.name} onClose={onClose}><div className="action-list"><button onClick={onRename}><Icon name="edit"/><span><b>Rename</b><small>Give this folder a new name</small></span></button><button onClick={onMove}><Icon name="move"/><span><b>Move folder</b><small>Choose a new destination</small></span></button><button className="danger" onClick={onDelete}><Icon name="trash"/><span><b>Delete folder</b><small>Also deletes items inside</small></span></button></div></Modal>; }
 function MoveModal({ title, folders, onClose, onMove }) { return <Modal title={title} onClose={onClose}><p className="sheet-help">Choose a destination in your Google Drive.</p><div className="destination-list">{folders.map(folder => <button key={folder.id} onClick={() => onMove(folder.id)}><span className="folder-icon"><Icon name="folder" size={21}/></span><b>{folder.name}</b><Icon name="chevron" size={18}/></button>)}</div></Modal>; }
-function PhotoModal({ photo, folder, onClose, onMove, onDelete }) { return <Modal title="Photo details" onClose={onClose}><div className="photo-action-preview"><img src={photo.dataUrl} alt={photo.name}/><div><b>{photo.name}</b><small><Icon name="folder" size={14}/>{folder?.name}</small></div></div><div className="action-list"><button onClick={onMove}><Icon name="move"/><span><b>Move photo</b><small>Choose another Drive folder</small></span></button><button className="danger" onClick={onDelete}><Icon name="trash"/><span><b>Delete photo</b><small>Remove it from your Drive</small></span></button></div></Modal>; }
+function PhotoModal({ photo, folder, onClose, onMove, onDelete, providerToken }) { return <Modal title="Photo details" onClose={onClose}><div className="photo-action-preview"><DriveImage photo={photo} providerToken={providerToken}/><div><b>{photo.name}</b><small><Icon name="folder" size={14}/>{folder?.name}</small></div></div><div className="action-list"><button onClick={onMove}><Icon name="move"/><span><b>Move photo</b><small>Choose another Drive folder</small></span></button><button className="danger" onClick={onDelete}><Icon name="trash"/><span><b>Delete photo</b><small>Remove it from your Drive</small></span></button></div></Modal>; }
