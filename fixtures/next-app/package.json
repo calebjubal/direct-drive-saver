@@ -1,0 +1,15 @@
+{
+  "name": "benchmark-next-fixture",
+  "version": "0.0.0",
+  "private": true,
+  "description": "Controlled Next.js fixture for the node_modules install benchmark. Versions are exact-pinned to match versions.json; do not add carets.",
+  "scripts": {
+    "build": "next build"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "2.112.3",
+    "next": "16.2.12",
+    "react": "19.2.6",
+    "react-dom": "19.2.6"
+  }
+}
