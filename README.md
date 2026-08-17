@@ -101,6 +101,20 @@ npm run build
 
 Run the compiled production application with `npm run start`.
 
+### Vercel
+
+Set the Vercel project Root Directory to `fixtures/next-app`. The app pins Node.js 22 and includes a pnpm 10-compatible lockfile, so Vercel can use its default frozen install safely.
+
+Whenever `package.json` dependencies change, synchronize both committed lockfiles before deploying:
+
+```bash
+cd fixtures/next-app
+npx pnpm@10 install --lockfile-only
+npm install --package-lock-only --ignore-scripts
+```
+
+Configure all three `NEXT_PUBLIC_` variables from `.env.local` in the target Vercel environment, then redeploy without using the previous build cache.
+
 ## How the application works
 
 1. Supabase redirects the user to Google with profile and full Drive scopes.
