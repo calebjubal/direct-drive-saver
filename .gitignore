@@ -2,8 +2,10 @@
 data/runs/
 .bench-work/
 
-# Dependencies / build output (fixtures have their own .gitignore too)
+# Dependencies / build output
 node_modules/
 .next/
+.next-dev/
+.vercel/
 .env.local
 .env*.local
