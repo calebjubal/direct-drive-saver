@@ -1,0 +1,9 @@
+# Benchmark run artifacts and temp working dirs
+data/runs/
+.bench-work/
+
+# Dependencies / build output (fixtures have their own .gitignore too)
+node_modules/
+.next/
+.env.local
+.env*.local
